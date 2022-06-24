@@ -4,94 +4,11 @@ const {
   shuffle
 } = require('./proxy.js');
 
+const {
+  Poset
+} = require('./graph.js');
+
 /* web-start */
-
-function DependencyGraph() {
-  var nodes = {};
-
-  function depends(src, dst) {
-    var node = nodes[src];
-    if (!node) return false;
-    var dependencies = {
-        [src]: 1
-      },
-      queue = [node];
-    while (queue.length > 0) {
-      node = queue.splice(0, 1)[0];
-      Object.keys(node.out).forEach(n => {
-        if (n == dst) return true;
-        if (!dependencies[n]) queue.push(nodes[n]);
-        else dependencies[n] = 1;
-      });
-    }
-    return false;
-  }
-
-  function dependencies(name) {
-    var node = nodes[name];
-    if (!node) return [];
-    var dependencies = {
-        [name]: 1
-      },
-      queue = [node],
-      ordered = [];
-    while (queue.length > 0) {
-      node = queue.splice(0, 1)[0];
-      Object.keys(node.out).forEach(n => {
-        if (!dependencies[n]) queue.push(nodes[n]);
-        else {
-          dependencies[n] = 1;
-          ordered.push(n);
-        }
-      });
-    }
-    return ordered;
-  }
-
-  function dependents(name) {
-    var node = nodes[name];
-    if (!node) return [];
-    var dependencies = {
-        [name]: 1
-      },
-      queue = [node],
-      ordered = [];
-    while (queue.length > 0) {
-      node = queue.splice(0, 1)[0];
-      Object.keys(node.in).forEach(n => {
-        if (!dependencies[n]) queue.push(nodes[n]);
-        else {
-          dependencies[n] = 1;
-          ordered.push(n);
-        }
-      });
-    }
-    return ordered;
-  }
-
-  function addDependency(src, dst) {
-    if (depends(dst, src)) throw new Error('cyclic dependency');
-    var Src = nodes[src];
-    if (!Src) Src = nodes[src] = {
-      out: {},
-      in: {}
-    };
-    var Dst = nodes[dst];
-    if (!Dst) Dst = nodes[dst] = {
-      out: {},
-      in: {}
-    };
-    Src.out[dst] = 1;
-    Dst.in[src] = 1;
-  }
-
-  Object.defineProperties(this, {
-    depends: { get: () => depends },
-    dependencies: { get: () => dependencies },
-    dependents: { get: () => dependents },
-    addDependency: { get: () => addDependency },
-  });
-}
 
 function DIValue(module, name, type, generator, dependencies) {
   var value;
@@ -280,7 +197,7 @@ var modules = {};
 function DIModule(name, deps) {
   modules[name] = this;
 
-  var graph = new DependencyGraph();
+  var graph = new Poset();
   var providers = {},
     services = {},
     functions = {},
@@ -289,12 +206,12 @@ function DIModule(name, deps) {
   function RegisterProvider(name, dependencies, provider) {
     if (dependencies)
       dependencies.forEach(dep => {
-        graph.addDependency(name, dep);
+        graph.addRelation(name, dep);
       });
     var o = providers[name];
     providers[name] = provider;
     if (o) {
-      graph.dependents(name).forEach(n => {
+      graph.ancestors(name).forEach(n => {
         var provider = providers[n];
         if (provider.generated) provider.reload();
       });
