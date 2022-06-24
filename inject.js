@@ -1,27 +1,10 @@
 //const _ = require("lodash");
 
-/* web-start */
+const {
+  prefix
+} = require('./proxy.js');
 
-function prefix(module, f, params) {
-  if(params.length == 0) return f;
-  function F() {
-    var args = params.map(p => {
-      let {
-        value,
-        provider
-      } = p;
-      if(provider)
-        return module.get(provider);
-      return value;
-    });
-    for(var i = 0; i < arguments.length; i++)
-      args.push(arguments[i]);
-    return f.apply(this, args);
-  }
-  F.prototype = Object.create(f.prototype);
-  
-  return F;
-}
+/* web-start */
 
 function order(params) {
   var Params = [];
