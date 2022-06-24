@@ -2,7 +2,7 @@
   "name": "oa-inject",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "inject.js",
   "scripts": {
     "test": "mocha --recursive \"./*_test.js\" --reporter mochawesome",
     "coverage": "nyc --reporter=html --reporter=text npm test",
