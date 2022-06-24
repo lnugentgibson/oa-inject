@@ -1,0 +1,23 @@
+{
+  "name": "oa-inject",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --recursive \"./*_test.js\" --reporter mochawesome",
+    "coverage": "nyc --reporter=html --reporter=text npm test",
+    "mutate": "stryker run"
+  },
+  "author": {
+    "name": "L. Nugent Gibson",
+    "email": "lloyd.nugent.gibson@gmail.com"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "^4.3.6",
+    "mocha": "^10.0.0",
+    "mochawesome": "^7.1.3",
+    "nyc": "^15.1.0",
+    "sinon": "^14.0.0"
+  }
+}

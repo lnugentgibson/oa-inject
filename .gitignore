@@ -1,0 +1,16 @@
+node_modules
+node_modules/
+node_modules/*
+mochawesome-report
+mochawesome-report/
+mochawesome-report/*
+coverage
+coverage/
+coverage/*
+reports
+reports/
+reports/*
+.nyc_output
+.nyc_output/
+.nyc_output/*
+package-lock.json
