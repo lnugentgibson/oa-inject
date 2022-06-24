@@ -1,5 +1,10 @@
 /* web-start */
 
+/**
+ * Returns a wrapper around the provided function that prepends arguments with
+ * the parameters provided similar to the bind function. This function uses the
+ * provided module to fetch values from providers at call time.
+ */
 function prefix(module, f, params) {
   if(params.length == 0) return f;
   function F() {
@@ -21,6 +26,10 @@ function prefix(module, f, params) {
   return F;
 }
 
+/**
+ * Creates a parameter list in the order they should be placed in the arguments
+ * list of a function call. This function also returns a list of gaps.
+ */
 function order(params) {
   var Params = [];
   params.forEach(param => {
@@ -44,6 +53,11 @@ function order(params) {
   return [Params, unused];
 }
 
+/**
+ * Returns a wrapper around the provided function that reorders arguments with
+ * the parameters provided by their specified index. This function uses the
+ * provided module to fetch values from providers at call time.
+ */
 function shuffle(module, f, params) {
   if(params.length == 0) return f;
   let [Params, unused] = order(params);
