@@ -5,7 +5,8 @@ const {
 } = require('./graph.js');
 
 const {
-  DIValue
+  DIValue,
+  DIField
 } = require('./value.js');
 
 /* web-start */
@@ -36,7 +37,12 @@ function DIModule(name, deps) {
   }
 
   function RegisterValue(name, generator, dependencies) {
-    RegisterProvider(name, dependencies, new DIValue(this, name, 'value', generator, dependencies));
+    if(name.includes('.')) throw new Error("name cannot contain '.'");
+    RegisterProvider(name, dependencies, new DIValue(this, name, generator, dependencies));
+  }
+
+  function RegisterField(name, parent) {
+    RegisterProvider(name, [parent], new DIField(this, name, parent));
   }
 
   function Alias(name, alias) {
@@ -95,6 +101,7 @@ function DIModule(name, deps) {
 
   Object.defineProperties(this, {
     Register: { get: () => RegisterValue },
+    RegisterField: { get: () => RegisterField },
     Alias: { get: () => Alias },
     get: { get: () => getValue },
     getProviders: { get: () => getProviders },

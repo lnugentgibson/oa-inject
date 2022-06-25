@@ -1,6 +1,8 @@
 /* web-start */
 
-function DIValue(module, name, type, generator, dependencies) {
+function DIValue(module, name, generator, dependencies) {
+  if(name.includes(':')) throw new Error("name cannot contain ':'");
+  
   var value;
   var generated = false;
 
@@ -23,9 +25,6 @@ function DIValue(module, name, type, generator, dependencies) {
   Object.defineProperties(this, {
     name: {
       get: () => name
-    },
-    type: {
-      get: () => type
     },
     dependencies: {
       get: () => dependencies.map(n => n)
@@ -57,8 +56,13 @@ function DIValue(module, name, type, generator, dependencies) {
   });
 }
 
+function DIField(module, name, parent) {
+  DIValue.call(this, module, `${parent}.${name}`, p => p[name], [parent]);
+}
+
 /* web-end */
 
 module.exports = {
-  DIValue
+  DIValue,
+  DIField
 };
