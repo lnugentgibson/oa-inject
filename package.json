@@ -12,6 +12,10 @@
     "email": "lloyd.nugent.gibson@gmail.com"
   },
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lnugentgibson/oa-inject.git"
+  },
   "devDependencies": {
     "chai": "^4.3.6",
     "mocha": "^10.0.0",
