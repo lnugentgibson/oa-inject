@@ -5,8 +5,7 @@
   "main": "inject.js",
   "scripts": {
     "test": "mocha --recursive \"./*_test.js\" --reporter mochawesome",
-    "coverage": "nyc --reporter=html --reporter=text npm test",
-    "mutate": "stryker run"
+    "coverage": "nyc --reporter=html --reporter=text npm test"
   },
   "author": {
     "name": "L. Nugent Gibson",
