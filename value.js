@@ -10,6 +10,7 @@ function DIValue(module, name, generator, dependencies) {
     //console.log(`DIValue['${name}'].generate()`);
     //console.log(`DIValue['${name}'].generator`);
     //console.log(generator);
+    try {
     if (dependencies)
       value = generator.apply(null, dependencies.map(dep => {
         //console.log(`${name} requires ${dep}`);
@@ -17,6 +18,13 @@ function DIValue(module, name, generator, dependencies) {
       }));
     else
       value = generator.call(null);
+    }
+    catch(err) {
+      console.error(`module = ${module.name}`);
+      console.error(`value name = ${name}`);
+      console.error(`value dependencies = ${dependencies.join()}`);
+      throw err;
+    }
     //console.log(`DIValue['${name}'].value`);
     generated = true;
     //console.log(value);

@@ -9,15 +9,21 @@ const {
   DIField
 } = require('./value.js');
 
+const {
+  DIFunction
+} = require('./function.js');
+
 /* web-start */
 
 var modules = {};
 
 function DIModule(name, deps) {
-  modules[name] = this;
+  var This = this;
+  modules[name] = This;
 
   var graph = new Poset();
   var providers = {};
+  var functions = {};
   var depTable = {};
   if(deps) deps.forEach(d => depTable[d] = 1);
 
@@ -38,20 +44,61 @@ function DIModule(name, deps) {
 
   function RegisterValue(name, generator, dependencies) {
     if(name.includes('.')) throw new Error("name cannot contain '.'");
-    RegisterProvider(name, dependencies, new DIValue(this, name, generator, dependencies));
+    RegisterProvider(name, dependencies, new DIValue(This, name, generator, dependencies));
   }
 
   function RegisterField(name, parent) {
-    RegisterProvider(name, [parent], new DIField(this, name, parent));
+    RegisterProvider(`${parent}.${name}`, [parent], new DIField(This, name, parent));
   }
 
+  function RegisterFunction(name, src, parameters) {
+    if(!providers[src]) throw new Error('no such provider');
+    functions[name] = new DIFunction(This, name, src, parameters);
+  }
+  
+  function RegisterObjectFields(name, description) {
+    for(const field in description) {
+      if(field === 'functions') {
+        for(const fn in description.functions) {
+          RegisterFunction(fn, name, description.functions[fn]);
+        }
+      }
+      else {
+        console.log(`Registering field ${field} of object ${name}`);
+        RegisterField(field, name);
+        RegisterObjectFields(`${name}.${field}`, description[field]);
+      }
+    }
+  }
+  
+  function RegisterObject(name, generator, dependencies, description) {
+    RegisterValue(name, generator, dependencies);
+    RegisterObjectFields(name, description);
+  }
+  
+  function applyFunction(name, ctx, args) {
+    var provider = functions[name];
+    if(provider == undefined) throw new Error('provider returns undefined');
+    return provider.apply(ctx, args);
+  }
+
+  function callFunction(name, ctx, ...args) {
+    var provider = functions[name];
+    if(provider == undefined) throw new Error('provider returns undefined');
+    return provider.call(ctx, ...args);
+  }
+  
   function Alias(name, alias) {
     var provider = providers[name];
     RegisterProvider(alias, provider.dependencies, provider);
   }
 
   function getProviders() {
-    return Object.keys(providers);
+    var out = Object.keys(providers);
+    for(const fn in functions) {
+      out.push(fn + '()');
+    }
+    return out;
   }
 
   function getValue(providerName) {
@@ -99,11 +146,16 @@ function DIModule(name, deps) {
     return provider.reload();
   }
 
-  Object.defineProperties(this, {
+  Object.defineProperties(This, {
+    name: { get: () => name },
     Register: { get: () => RegisterValue },
     RegisterField: { get: () => RegisterField },
+    RegisterFunction: { get: () => RegisterFunction },
+    RegisterObject: { get: () => RegisterObject },
     Alias: { get: () => Alias },
     get: { get: () => getValue },
+    apply: { get: () => applyFunction },
+    call: { get: () => callFunction },
     getProviders: { get: () => getProviders },
     reload: { get: () => reloadProvider }
   });
