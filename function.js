@@ -32,8 +32,27 @@ function DIFunction(module, name, src, parameters) {
   });
 }
 
+function DIType(module, name, src, parameters) {
+  DIFunction.call(this, module, name, src, parameters);
+  
+  function instantiate() {
+    var func = this.get();
+    var args = [undefined];
+    for(var i = 0; i < arguments.length; i++)
+      args.push(arguments[i]);
+    var F = Function.prototype.bind.apply(func, args);
+    F.prototype = Object.create(func.prototype);
+    return new F();
+  }
+
+  Object.defineProperties(this, {
+    instantiate: { get: () => instantiate }
+  });
+}
+
 /* web-end */
 
 module.exports = {
-  DIFunction
+  DIFunction,
+  DIType
 };
