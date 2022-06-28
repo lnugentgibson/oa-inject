@@ -124,8 +124,8 @@ describe('oaInject', function() {
         t: {types:{'val.t':[]}},
         s: {
           w:1,
-          g: {functions:{'val.s.g':[]}},
-          u: {types:{'val.s.u':[]}}
+          g: {functions:{'g':[]}},
+          u: {types:{'u':[]}}
         }
       };
       var generator = () => val;
@@ -141,8 +141,8 @@ describe('oaInject', function() {
         'val.s.u',
         'val.f()',
         'val.t{}',
-        'val.s.g()',
-        'val.s.u{}'
+        'g()',
+        'u{}'
       ];
       ps.sort();
       var Ps = module.getProviders();
@@ -157,9 +157,9 @@ describe('oaInject', function() {
       expect(module.get('val.s')).to.equal(val.s);
       expect(module.get('val.s.w')).to.equal(4);
       expect(module.get('val.s.g')).to.equal(val.s.g);
-      expect(module.call('val.s.g')).to.equal(5);
+      expect(module.call('g')).to.equal(5);
       expect(module.get('val.s.u')).to.equal(val.s.u);
-      expect(module.instantiate('val.s.u').test()).to.equal(43);
+      expect(module.instantiate('u').test()).to.equal(43);
     });
   });
 });

@@ -9,9 +9,8 @@ const {
 /* web-start */
 
 function DIFunction(module, name, src, parameters) {
-  function generate() {
+  function generate(func) {
     //console.log(`DIFunction['${name}'].generate()`);
-    var func = module.get(name);
     return shuffle(module, func, parameters.filter(p => !p.useargs));
   }
   if (!parameters) parameters = [];

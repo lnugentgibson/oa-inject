@@ -80,7 +80,6 @@ function DIModule(name, deps) {
         }
       }
       else {
-        console.log(`Registering field ${field} of object ${name}`);
         RegisterField(field, name);
         RegisterObjectFields(`${name}.${field}`, description[field]);
       }
@@ -93,13 +92,25 @@ function DIModule(name, deps) {
     return This;
   }
   
-  function applyFunction(name, ctx, args) {
+  function applyFunction(name, args) {
+    var provider = functions[name];
+    if(provider == undefined) throw new Error('provider returns undefined');
+    return provider.apply(null, args);
+  }
+
+  function ApplyFunction(name, ctx, args) {
     var provider = functions[name];
     if(provider == undefined) throw new Error('provider returns undefined');
     return provider.apply(ctx, args);
   }
 
-  function callFunction(name, ctx, ...args) {
+  function callFunction(name, ...args) {
+    var provider = functions[name];
+    if(provider == undefined) throw new Error('provider returns undefined');
+    return provider.call(null, ...args);
+  }
+  
+  function CallFunction(name, ctx, ...args) {
     var provider = functions[name];
     if(provider == undefined) throw new Error('provider returns undefined');
     return provider.call(ctx, ...args);
@@ -182,7 +193,9 @@ function DIModule(name, deps) {
     Alias: { get: () => Alias },
     get: { get: () => getValue },
     apply: { get: () => applyFunction },
+    Apply: { get: () => ApplyFunction },
     call: { get: () => callFunction },
+    Call: { get: () => CallFunction },
     instantiate: { get: () => instantiateType },
     getProviders: { get: () => getProviders },
     reload: { get: () => reloadProvider }
@@ -193,6 +206,9 @@ const oaInject = {
   module(name, dependencies) {
     if(modules[name]) throw new Error('module already exists');
     return new DIModule(name, dependencies);
+  },
+  getModule(name) {
+    return modules[name];
   }
 };
 
