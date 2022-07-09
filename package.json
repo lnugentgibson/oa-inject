@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "main": "inject.js",
+  "exports": {
+    ".": "inject.js",
+    "./base": "base.js",
+    "./js": "js.js"
+  },
   "scripts": {
     "test": "mocha --recursive \"./*_test.js\" --reporter mochawesome",
     "coverage": "nyc --reporter=html --reporter=text npm test"

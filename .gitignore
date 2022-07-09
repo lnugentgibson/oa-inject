@@ -14,3 +14,6 @@ reports/*
 .nyc_output/
 .nyc_output/*
 package-lock.json
+browser
+browser/
+browser/*
