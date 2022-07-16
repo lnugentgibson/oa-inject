@@ -128,6 +128,31 @@ describe('oaInject', function() {
           u: {types:{'u':[]}}
         }
       };
+      des = [
+        'v',
+        {
+          name: 'f',
+          functions: {'val.f':[]}
+        },
+        {
+          name: 't',
+          types: {'val.t':[]}
+        },
+        {
+          name: 's',
+          children: [
+            'w',
+            {
+              name: 'g',
+              function: []
+            },
+            {
+              name: 'u',
+              type: []
+            },
+          ]
+        },
+      ];
       var generator = () => val;
       module.RegisterObject('val', generator, [], des);
       var ps = [

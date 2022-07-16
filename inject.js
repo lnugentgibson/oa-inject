@@ -68,22 +68,32 @@ function DIModule(name, deps) {
   }
   
   function RegisterObjectFields(name, description) {
-    for(const field in description) {
-      if(field === 'functions') {
-        for(const fn in description.functions) {
-          RegisterFunction(fn, name, description.functions[fn]);
-        }
-      }
-      else if(field === 'types') {
-        for(const tn in description.types) {
-          RegisterType(tn, name, description.types[tn]);
-        }
+    description.forEach(descriptor => {
+      if(typeof descriptor === 'string' || descriptor instanceof String) {
+        var field = descriptor;
+        RegisterField(field, name);
       }
       else {
+        let {name: field, function: func, functions, type, types, children} = descriptor;
         RegisterField(field, name);
-        RegisterObjectFields(`${name}.${field}`, description[field]);
+        if(func) {
+          RegisterFunction(field, `${name}.${field}`, func);
+        }
+        else if(functions)
+          for(const fn in functions) {
+            RegisterFunction(fn, `${name}.${field}`, functions[fn]);
+          }
+        if(type) {
+          RegisterType(field, `${name}.${field}`, type);
+        }
+        else if(types)
+          for(const tn in types) {
+            RegisterType(tn, `${name}.${field}`, types[tn]);
+          }
+        if(children)
+          RegisterObjectFields(`${name}.${field}`, children);
       }
-    }
+    });
   }
   
   function RegisterObject(name, generator, dependencies, description) {

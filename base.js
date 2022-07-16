@@ -7,11 +7,11 @@ const {
 /* web-start */
 
 oaInject.module('base', [])
-.RegisterObject('poset', () => Poset, [], {
-  related: {functions: {related: []}},
-  decendants: {functions: {decendants: []}},
-  ancestors: {functions: {ancestors: []}},
-  addRelation: {functions: {addRelation: []}},
-});
+.RegisterObject('poset', () => Poset, [], [
+  {name: 'related', function: []},
+  {name: 'decendants', function: []},
+  {name: 'ancestors', function: []},
+  {name: 'addRelation', function: []},
+]);
 
 /* web-end */
