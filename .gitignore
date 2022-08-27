@@ -17,3 +17,6 @@ package-lock.json
 browser
 browser/
 browser/*
+playground
+playground/
+playground/*
