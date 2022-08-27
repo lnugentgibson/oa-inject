@@ -6,15 +6,15 @@ function DIValue(module, name, generator, dependencies) {
   var value;
   var generated = false;
 
-  function generate() {
+  function generate(deps) {
     //console.log(`DIValue['${name}'].generate()`);
     //console.log(`DIValue['${name}'].generator`);
     //console.log(generator);
     try {
     if (dependencies)
-      value = generator.apply(null, dependencies.map(dep => {
+      value = generator.apply(null, dependencies.map((dep,i) => {
         //console.log(`${name} requires ${dep}`);
-        return module.get(dep);
+        return (deps && i < deps.length) ? deps[i] : module.get(dep);
       }));
     else
       value = generator.call(null);
@@ -35,7 +35,7 @@ function DIValue(module, name, generator, dependencies) {
       get: () => name
     },
     dependencies: {
-      get: () => dependencies.map(n => n)
+      get: () => dependencies ? dependencies.map(n => n) : []
     },
     generated: {
       get: () => generated
@@ -45,16 +45,16 @@ function DIValue(module, name, generator, dependencies) {
     },
     get: {
       get: () => {
-        return () => {
+        return (deps) => {
           //console.log(`DIValue['${name}'].get()`);
-          if (!generated) generate();
+          if (!generated) generate(deps);
           return value;
         };
       }
     },
     reload: {
-      get: () => (() => {
-        generate();
+      get: () => ((deps) => {
+        generate(deps);
         return value;
       })
     },

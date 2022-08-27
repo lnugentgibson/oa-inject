@@ -19,6 +19,14 @@ describe('oaInject', function() {
       module.Register('val', generator);
       expect(module.get('val')).to.equal(val);
     });
+    it('cyclic dependencies', function() {
+      var module = oaInject.module('mod2b');
+      expect(() => {
+        module.Register('B', () => 1, ['A']);
+        module.Register('A', () => 2, ['B']);
+        module.get('A');
+      }).to.throw('cyclic');
+    });
     it('works with dependencies', function() {
       var module = oaInject.module('mod3');
       module.Register('dep1', () => 1);
@@ -30,6 +38,20 @@ describe('oaInject', function() {
       expect(module.get('val')).to.equal(val);
       expect(generator.calledOnce).to.be.true;
       expect(generator.firstCall.args).to.deep.equal([1,2,3]);
+      //expect(generator.calledWith(1, 2, 3).calledOnce).to.be.true;
+    });
+    it('works with overridden dependencies', function() {
+      var module = oaInject.module('mod3b');
+      module.Register('dep1', () => 1);
+      module.Register('dep2', () => 2);
+      module.Register('dep3', () => 3);
+      module.Register('dep2alt', () => 2.5);
+      var val = {v:2};
+      var generator = sinon.fake.returns(val);
+      module.Register('val', generator, ['dep1', 'dep2', 'dep3']);
+      expect(module.get('val', {dep2: 'dep2alt'})).to.equal(val);
+      expect(generator.calledOnce).to.be.true;
+      expect(generator.firstCall.args).to.deep.equal([1,2.5,3]);
       //expect(generator.calledWith(1, 2, 3).calledOnce).to.be.true;
     });
     it('works with cross module dependencies', function() {

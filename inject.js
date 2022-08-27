@@ -30,10 +30,12 @@ function DIModule(name, deps) {
   if(deps) deps.forEach(d => depTable[d] = 1);
 
   function RegisterProvider(name, dependencies, provider) {
+    /*
     if (dependencies)
       dependencies.forEach(dep => {
         graph.addRelation(name, dep);
       });
+    //*/
     var o = providers[name];
     providers[name] = provider;
     if (o) {
@@ -148,7 +150,7 @@ function DIModule(name, deps) {
     return out;
   }
 
-  function getValue(providerName) {
+  function getValue(providerName, overrides) {
     try {
       var match = providerName.match(/([^:]+):(.+)/);
       if(match) {
@@ -158,8 +160,22 @@ function DIModule(name, deps) {
         return dep.get(match[2]);
       }
       var provider = providers[providerName];
-      if (provider)
-        return provider.get();
+      if (provider) {
+        let {dependencies} = provider;
+        let ds;
+        //*
+        if (dependencies)
+          ds = dependencies.map(dep => {
+            if(overrides) {
+              var odep = overrides[dep];
+              if(odep) dep = odep;
+            }
+            graph.addRelation(providerName, dep);
+            return getValue(dep);
+          });
+        //*/
+        return provider.get(ds);
+      }
       if (deps)
         for (var i = 0; i < deps.length && provider == undefined; i++) {
           if (!modules[deps[i]]) {
