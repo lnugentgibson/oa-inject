@@ -149,8 +149,74 @@ function DIModule(name, deps) {
     }
     return out;
   }
+  
+  function generateDependencies(provider, overrides, values) {
+    let {dependencies} = provider;
+    let ds;
+    if (dependencies)
+      ds = dependencies.map(dep => {
+        if(values) {
+          let val = values[dep];
+          if(val != undefined) return val;
+        }
+        if(overrides) {
+          var odep = overrides[dep];
+          if(odep) dep = odep;
+        }
+        graph.addRelation(provider.name, dep);
+        return getValue(dep);
+      });
+    //*/
+    return ds;
+  }
+  
+  function generate(provider, overrides, values) {
+    let ds = generateDependencies(provider, overrides, values);
+    return provider.generate(ds);
+  }
 
-  function getValue(providerName, overrides) {
+  function genValue(providerName, overrides, values) {
+    try {
+      var match = providerName.match(/([^:]+):(.+)/);
+      if(match) {
+        var dmod = match[1];
+        if(!depTable[dmod]) throw new Error(`module ${name} does not depend on module ${dmod}`);
+        var dep = modules[dmod];
+        return dep.gen(match[2]);
+      }
+      var provider = providers[providerName];
+      if (provider) {
+        return generate(provider, overrides, values);
+      }
+      if (deps)
+        for (var i = 0; i < deps.length && provider == undefined; i++) {
+          if (!modules[deps[i]]) {
+            throw `module ${name} depends on missing module ${deps[i]}`;
+          }
+          try {
+            return modules[deps[i]].gen(providerName);
+          }
+          catch (err) {}
+        }
+      var names = getProviders();
+      if (deps)
+        deps.forEach(dep => {
+          var Dep = modules[dep];
+          names = names.concat(Dep.getProviders().map(n => dep + ':' + n));
+        });
+      throw new Error(`Provider with name ${providerName} does not exist.\nAvailable providers: ${names.join(', ')}`);
+    }
+    catch (err) {
+      throw err;
+    }
+  }
+  
+  function provide(provider, overrides, values) {
+    let ds = generateDependencies(provider, overrides, values);
+    return provider.get(ds);
+  }
+
+  function getValue(providerName, overrides, values) {
     try {
       var match = providerName.match(/([^:]+):(.+)/);
       if(match) {
@@ -161,20 +227,7 @@ function DIModule(name, deps) {
       }
       var provider = providers[providerName];
       if (provider) {
-        let {dependencies} = provider;
-        let ds;
-        //*
-        if (dependencies)
-          ds = dependencies.map(dep => {
-            if(overrides) {
-              var odep = overrides[dep];
-              if(odep) dep = odep;
-            }
-            graph.addRelation(providerName, dep);
-            return getValue(dep);
-          });
-        //*/
-        return provider.get(ds);
+        return provide(provider, overrides, values);
       }
       if (deps)
         for (var i = 0; i < deps.length && provider == undefined; i++) {
@@ -199,14 +252,14 @@ function DIModule(name, deps) {
     }
   }
 
-  function reloadProvider(name) {
-    var provider = providers[name];
+  function reloadProvider(providerName, overrides, values) {
+    var provider = providers[providerName];
     if (provider == undefined && deps)
       for (var i = 0; i < deps.length && provider == undefined; i++)
-        provider = deps[i].get(name);
+        provider = deps[i].get(providerName);
     if (provider == undefined)
-      throw new Error(`Provider with name ${name} does not exist`);
-    return provider.reload();
+      throw new Error(`Provider with name ${providerName} does not exist`);
+    return provide(provider, overrides, values);
   }
 
   Object.defineProperties(This, {
@@ -218,6 +271,7 @@ function DIModule(name, deps) {
     RegisterObject: { get: () => RegisterObject },
     Alias: { get: () => Alias },
     get: { get: () => getValue },
+    gen: { get: () => genValue },
     apply: { get: () => applyFunction },
     Apply: { get: () => ApplyFunction },
     call: { get: () => callFunction },

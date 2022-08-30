@@ -40,6 +40,39 @@ describe('oaInject', function() {
       expect(generator.firstCall.args).to.deep.equal([1,2,3]);
       //expect(generator.calledWith(1, 2, 3).calledOnce).to.be.true;
     });
+    it('generate works with dependencies', function() {
+      var module = oaInject.module('mod3c');
+      module.Register('dep1', () => 1);
+      module.Register('dep2', () => 2);
+      module.Register('dep2b', () => -2);
+      module.Register('dep3', () => 3);
+      var generator = sinon.stub().callsFake((a,b,c) => ({v:a+b+c}));
+      module.Register('val', generator, ['dep1', 'dep2', 'dep3']);
+      
+      let val = module.get('val');
+      expect(val).to.deep.equal({v:6});
+      expect(generator.calledOnce).to.be.true;
+      //expect(generator.firstCall.args).to.deep.equal([1,2,3]);
+      expect(generator.calledWith(1, 2, 3), generator.firstCall.args.join()).to.be.true;
+      
+      val = module.gen('val', {dep2: 'dep2b'});
+      expect(val).to.deep.equal({v:2});
+      expect(generator.callCount).to.equal(2);
+      //expect(generator.firstCall.args).to.deep.equal([1,2,3]);
+      expect(generator.calledWith(1, -2, 3), generator.secondCall.args.join()).to.be.true;
+      
+      val = module.gen('val', null, {dep2: 4});
+      expect(val).to.deep.equal({v:8});
+      expect(generator.callCount).to.equal(3);
+      //expect(generator.firstCall.args).to.deep.equal([1,2,3]);
+      expect(generator.calledWith(1, 4, 3), generator.thirdCall.args.join()).to.be.true;
+      
+      val = module.get('val');
+      expect(val).to.deep.equal({v:6});
+      expect(generator.callCount).to.equal(3);
+      //expect(generator.firstCall.args).to.deep.equal([1,2,3]);
+      expect(generator.calledWith(1, 2, 3), generator.firstCall.args.join()).to.be.true;
+    });
     it('works with overridden dependencies', function() {
       var module = oaInject.module('mod3b');
       module.Register('dep1', () => 1);

@@ -10,14 +10,15 @@ function DIValue(module, name, generator, dependencies) {
     //console.log(`DIValue['${name}'].generate()`);
     //console.log(`DIValue['${name}'].generator`);
     //console.log(generator);
+    let val;
     try {
     if (dependencies)
-      value = generator.apply(null, dependencies.map((dep,i) => {
+      val = generator.apply(null, dependencies.map((dep,i) => {
         //console.log(`${name} requires ${dep}`);
         return (deps && i < deps.length) ? deps[i] : module.get(dep);
       }));
     else
-      value = generator.call(null);
+      val = generator.call(null);
     }
     catch(err) {
       console.error(`module = ${module.name}`);
@@ -28,6 +29,7 @@ function DIValue(module, name, generator, dependencies) {
     //console.log(`DIValue['${name}'].value`);
     generated = true;
     //console.log(value);
+    return val;
   }
 
   Object.defineProperties(this, {
@@ -47,14 +49,14 @@ function DIValue(module, name, generator, dependencies) {
       get: () => {
         return (deps) => {
           //console.log(`DIValue['${name}'].get()`);
-          if (!generated) generate(deps);
+          if (!generated) value = generate(deps);
           return value;
         };
       }
     },
     reload: {
       get: () => ((deps) => {
-        generate(deps);
+        value = generate(deps);
         return value;
       })
     },
