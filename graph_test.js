@@ -62,12 +62,32 @@ describe('Poset', function() {
     expect(poset.related('a', 'g', false)).to.be.true;
     expect(poset.related('a', 'f', false)).to.be.false;
   });
-  it('descendants', function () {
+  it('direct descendants', function () {
+    expect(poset.decendants('a', true)).to.deep.equal(['b', 'd']);
+    expect(poset.decendants('b', true)).to.deep.equal(['d', 'g']);
+    expect(poset.decendants('c', true)).to.deep.equal(['e', 'g', 'h']);
+    expect(poset.decendants('d', true)).to.deep.equal(['g']);
+    expect(poset.decendants('e', true)).to.deep.equal(['g', 'h']);
+    expect(poset.decendants('f', true)).to.deep.equal([]);
+    expect(poset.decendants('g', true)).to.deep.equal([]);
+    expect(poset.decendants('h', true)).to.deep.equal([]);
+  });
+  it('indirect descendants', function () {
     var ds = poset.decendants('a');
     ds.sort();
     expect(ds).to.deep.equal(['b','d','g']);
   });
-  it('ancestors', function () {
+  it('direct ancestors', function () {
+    expect(poset.ancestors('a', true)).to.deep.equal([]);
+    expect(poset.ancestors('b', true)).to.deep.equal(['a']);
+    expect(poset.ancestors('c', true)).to.deep.equal([]);
+    expect(poset.ancestors('d', true)).to.deep.equal(['a', 'b']);
+    expect(poset.ancestors('e', true)).to.deep.equal(['c']);
+    expect(poset.ancestors('f', true)).to.deep.equal([]);
+    expect(poset.ancestors('g', true)).to.deep.equal(['b', 'c', 'd', 'e']);
+    expect(poset.ancestors('h', true)).to.deep.equal(['c', 'e']);
+  });
+  it('indirect ancestors', function () {
     var ds = poset.ancestors('g');
     ds.sort();
     expect(ds).to.deep.equal(['a','b','c','d','e']);

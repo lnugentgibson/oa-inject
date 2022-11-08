@@ -27,7 +27,7 @@ function Poset() {
     return false;
   }
 
-  function decendants(name) {
+  function decendants(name, direct = false) {
     var node = nodes[name];
     if (!node) return [];
     var decendants = {
@@ -35,6 +35,12 @@ function Poset() {
       },
       queue = [node],
       arr = [];
+    if(direct) {
+      Object.keys(node.out).forEach(n => {
+        arr.push(n);
+      });
+      return arr;
+    }
     while (queue.length > 0) {
       node = queue.splice(0, 1)[0];
       Object.keys(node.out).forEach(n => {
@@ -48,7 +54,7 @@ function Poset() {
     return arr;
   }
 
-  function ancestors(name) {
+  function ancestors(name, direct = false) {
     var node = nodes[name];
     if (!node) return [];
     var ancestors = {
@@ -56,6 +62,12 @@ function Poset() {
       },
       queue = [node],
       arr = [];
+    if(direct) {
+      Object.keys(node.in).forEach(n => {
+        arr.push(n);
+      });
+      return arr;
+    }
     while (queue.length > 0) {
       node = queue.splice(0, 1)[0];
       Object.keys(node.in).forEach(n => {

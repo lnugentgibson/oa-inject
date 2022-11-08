@@ -242,4 +242,16 @@ describe('oaInject', function() {
       expect(module.instantiate('u').test()).to.equal(43);
     });
   });
+  it('with', function() {
+    var dmodule = oaInject.module('withDepMod');
+    dmodule.Register('dep1', () => 1);
+    var module = oaInject.module('withMod', ['withDepMod']);
+    module.Register('dep2', () => 2);
+    module.Register('dep3', () => 3);
+    var val = {};
+    var fn = sinon.fake.returns(val);
+    module.with(fn, ['withDepMod:dep1', 'dep2', 'dep3']);
+    expect(fn.calledOnce).to.be.true;
+    expect(fn.firstCall.args).to.deep.equal([1,2,3]);
+  });
 });

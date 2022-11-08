@@ -261,6 +261,10 @@ function DIModule(name, deps) {
       throw new Error(`Provider with name ${providerName} does not exist`);
     return provide(provider, overrides, values);
   }
+  
+  function With(fn, dependencies) {
+    fn.apply(null, dependencies.map(d => getValue(d)));
+  }
 
   Object.defineProperties(This, {
     name: { get: () => name },
@@ -278,7 +282,8 @@ function DIModule(name, deps) {
     Call: { get: () => CallFunction },
     instantiate: { get: () => instantiateType },
     getProviders: { get: () => getProviders },
-    reload: { get: () => reloadProvider }
+    reload: { get: () => reloadProvider },
+    with: {get: () => With}
   });
 }
 
