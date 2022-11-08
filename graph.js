@@ -97,11 +97,21 @@ function Poset() {
     Dst.in[src] = 1;
   }
 
+  function removeRelation(src, dst) {
+    var Src = nodes[src];
+    if (!Src) return;
+    var Dst = nodes[dst];
+    if (!Dst) return;
+    delete Src.out[dst];
+    delete Dst.in[src];
+  }
+
   Object.defineProperties(this, {
     related: { get: () => related },
     decendants: { get: () => decendants },
     ancestors: { get: () => ancestors },
     addRelation: { get: () => addRelation },
+    removeRelation: { get: () => removeRelation },
     //nodes: { get: () => nodes },
   });
 }
