@@ -96,6 +96,22 @@ function Poset() {
     Src.out[dst] = 1;
     Dst.in[src] = 1;
   }
+  
+  function roots() {
+    let out = [];
+    for(const [name, Node] of Object.entries(nodes)) {
+      if(Node.in.length == 0) out.push(name);
+    }
+    return out;
+  }
+  
+  function leaves() {
+    let out = [];
+    for(const [name, Node] of Object.entries(nodes)) {
+      if(Node.out.length == 0) out.push(name);
+    }
+    return out;
+  }
 
   function removeRelation(src, dst) {
     var Src = nodes[src];
@@ -112,6 +128,8 @@ function Poset() {
     ancestors: { get: () => ancestors },
     addRelation: { get: () => addRelation },
     removeRelation: { get: () => removeRelation },
+    roots: { get: () => roots },
+    leaves: { get: () => leaves },
     //nodes: { get: () => nodes },
   });
 }
