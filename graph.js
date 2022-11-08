@@ -100,7 +100,7 @@ function Poset() {
   function roots() {
     let out = [];
     for(const [name, Node] of Object.entries(nodes)) {
-      if(Node.in.length == 0) out.push(name);
+      if(Object.keys(Node.in).length == 0) out.push(name);
     }
     return out;
   }
@@ -108,7 +108,7 @@ function Poset() {
   function leaves() {
     let out = [];
     for(const [name, Node] of Object.entries(nodes)) {
-      if(Node.out.length == 0) out.push(name);
+      if(Object.keys(Node.out).length == 0) out.push(name);
     }
     return out;
   }
