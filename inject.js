@@ -27,7 +27,10 @@ function DIModule(name, deps) {
   var functions = {};
   var types = {};
   var depTable = {};
-  if(deps) deps.forEach(d => depTable[d.name] = d);
+  if(deps) deps.forEach(d => {
+    if(!(d instanceof DIModule)) throw new Error('dependencies must be modules');
+    depTable[d.name] = d;
+  });
 
   function RegisterProvider(name, dependencies, provider) {
     /*

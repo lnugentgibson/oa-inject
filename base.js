@@ -6,7 +6,9 @@ const {
 
 /* web-start */
 
-oaInject.module('base', [])
-.Register('poset', () => Poset, []);
+const base = oaInject.module('base', []);
+base.Register('poset', () => Poset, []);
 
 /* web-end */
+
+module.exports = base;

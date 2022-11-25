@@ -2,8 +2,8 @@ const oaInject = require('./inject.js');
 
 /* web-start */
 
-oaInject.module('builtin', [])
-.RegisterObject('Math', () => Math, [], [
+const builtin = oaInject.module('builtin', []);
+builtin.RegisterObject('Math', () => Math, [], [
   'E',
   'LN2',
   'LN10',
@@ -55,3 +55,5 @@ oaInject.module('builtin', [])
 ]);
 
 /* web-end */
+
+module.exports = builtin;
