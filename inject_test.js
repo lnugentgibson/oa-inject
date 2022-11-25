@@ -90,7 +90,7 @@ describe('oaInject', function() {
     it('works with cross module dependencies', function() {
       var dmodule = oaInject.module('depMod1');
       dmodule.Register('dep1', () => 1);
-      var module = oaInject.module('mod4', ['depMod1']);
+      var module = oaInject.module('mod4', [dmodule]);
       module.Register('dep2', () => 2);
       module.Register('dep3', () => 3);
       var val = {};
@@ -103,7 +103,7 @@ describe('oaInject', function() {
     it('works with cross module dependencies colon notation', function() {
       var dmodule = oaInject.module('depMod2');
       dmodule.Register('dep1', () => 1);
-      var module = oaInject.module('mod5', ['depMod2']);
+      var module = oaInject.module('mod5', [dmodule]);
       module.Register('dep2', () => 2);
       module.Register('dep3', () => 3);
       var val = {};
@@ -245,7 +245,7 @@ describe('oaInject', function() {
   it('with', function() {
     var dmodule = oaInject.module('withDepMod');
     dmodule.Register('dep1', () => 1);
-    var module = oaInject.module('withMod', ['withDepMod']);
+    var module = oaInject.module('withMod', [dmodule]);
     module.Register('dep2', () => 2);
     module.Register('dep3', () => 3);
     var val = {};

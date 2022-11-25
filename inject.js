@@ -27,7 +27,7 @@ function DIModule(name, deps) {
   var functions = {};
   var types = {};
   var depTable = {};
-  if(deps) deps.forEach(d => depTable[d] = 1);
+  if(deps) deps.forEach(d => depTable[d.name] = d);
 
   function RegisterProvider(name, dependencies, provider) {
     /*
@@ -222,7 +222,7 @@ function DIModule(name, deps) {
       if(match) {
         var dmod = match[1];
         if(!depTable[dmod]) throw new Error(`module ${name} does not depend on module ${dmod}`);
-        var dep = modules[dmod];
+        var dep = depTable[dmod];
         return dep.get(match[2]);
       }
       var provider = providers[providerName];
@@ -231,19 +231,18 @@ function DIModule(name, deps) {
       }
       if (deps)
         for (var i = 0; i < deps.length && provider == undefined; i++) {
-          if (!modules[deps[i]]) {
+          if (!deps[i]) {
             throw `module ${name} depends on missing module ${deps[i]}`;
           }
           try {
-            return modules[deps[i]].get(providerName);
+            return deps[i].get(providerName);
           }
           catch (err) {}
         }
       var names = getProviders();
       if (deps)
         deps.forEach(dep => {
-          var Dep = modules[dep];
-          names = names.concat(Dep.getProviders().map(n => dep + ':' + n));
+          names = names.concat(dep.getProviders().map(n => dep + ':' + n));
         });
       throw new Error(`Provider with name ${providerName} does not exist.\nAvailable providers: ${names.join(', ')}`);
     }
