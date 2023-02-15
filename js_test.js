@@ -53,3 +53,14 @@ describe('Math', function() {
     }
   });
 });
+
+describe('Promise', function() {
+  it('constructor', function() {
+    let p = builtin.instantiate('Promise', (resolve, reject) => resolve);
+    expect(p instanceof Promise).to.be.true;
+  });
+  it('resolve', function() {
+    let p = builtin.call('resolve', 5);
+    expect(p instanceof Promise).to.be.true;
+  });
+});

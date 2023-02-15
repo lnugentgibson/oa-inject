@@ -20,14 +20,24 @@ function DIFunction(module, name, src, parameters) {
     var func = this.get();
     return func.apply(ctx, args);
   }
+  function callSelf(...args) {
+    var func = this.get();
+    return func.apply(func, args);
+  }
   function apply(ctx, args) {
     var func = this.get();
     return func.apply(ctx, args);
   }
+  function applySelf(args) {
+    var func = this.get();
+    return func.apply(func, args);
+  }
 
   Object.defineProperties(this, {
     call: { get: () => call },
-    apply: { get: () => apply }
+    callSelf: { get: () => callSelf },
+    apply: { get: () => apply },
+    applySelf: { get: () => applySelf }
   });
 }
 

@@ -55,8 +55,8 @@ function DIModule(name, deps) {
     return This;
   }
 
-  function RegisterField(name, parent) {
-    RegisterProvider(`${parent}.${name}`, [parent], new DIField(This, name, parent));
+  function RegisterField(name, parent, bind) {
+    RegisterProvider(`${parent}.${name}`, [parent], new DIField(This, name, parent, bind));
     return This;
   }
 
@@ -79,8 +79,8 @@ function DIModule(name, deps) {
         RegisterField(field, name);
       }
       else {
-        let {name: field, function: func, functions, type, types, children} = descriptor;
-        RegisterField(field, name);
+        let {name: field, function: func, functions, type, types, children, bind} = descriptor;
+        RegisterField(field, name, bind);
         if(func) {
           RegisterFunction(field, `${name}.${field}`, func);
         }
@@ -118,6 +118,12 @@ function DIModule(name, deps) {
     if(provider == undefined) throw new Error('provider returns undefined');
     return provider.apply(ctx, args);
   }
+  
+  function applySelfFunction(name, args) {
+    var provider = functions[name];
+    if(provider == undefined) throw new Error('provider returns undefined');
+    return provider.applySelf(args);
+  }
 
   function callFunction(name, ...args) {
     var provider = functions[name];
@@ -129,6 +135,12 @@ function DIModule(name, deps) {
     var provider = functions[name];
     if(provider == undefined) throw new Error('provider returns undefined');
     return provider.call(ctx, ...args);
+  }
+
+  function callSelfFunction(name, ...args) {
+    var provider = functions[name];
+    if(provider == undefined) throw new Error('provider returns undefined');
+    return provider.callSelf(...args);
   }
   
   function instantiateType(name, ...args) {
@@ -279,8 +291,10 @@ function DIModule(name, deps) {
     get: { get: () => getValue },
     gen: { get: () => genValue },
     apply: { get: () => applyFunction },
+    applySelf: { get: () => applySelfFunction },
     Apply: { get: () => ApplyFunction },
     call: { get: () => callFunction },
+    callSelf: { get: () => callSelfFunction },
     Call: { get: () => CallFunction },
     instantiate: { get: () => instantiateType },
     getProviders: { get: () => getProviders },

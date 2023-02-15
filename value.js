@@ -66,8 +66,13 @@ function DIValue(module, name, generator, dependencies) {
   });
 }
 
-function DIField(module, name, parent) {
-  DIValue.call(this, module, `${parent}.${name}`, p => p[name], [parent]);
+function DIField(module, name, parent, bind = false) {
+  DIValue.call(this, module, `${parent}.${name}`, p => {
+    if(bind)
+      return p[name].bind(p);
+    else
+      return p[name];
+  }, [parent]);
 }
 
 /* web-end */

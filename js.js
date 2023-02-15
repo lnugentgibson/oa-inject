@@ -53,6 +53,10 @@ builtin.RegisterObject('Math', () => Math, [], [
   {name: 'clz32', function: []},
   {name: 'imul', function: []},
 ]);
+builtin.RegisterObject('Promise', () => Promise, [], [
+  {name: 'resolve', function: [], bind: true},
+]);
+builtin.RegisterType('Promise', 'Promise');
 
 /* web-end */
 
