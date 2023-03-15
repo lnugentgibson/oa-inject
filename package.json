@@ -1,5 +1,5 @@
 {
-  "name": "oa-inject",
+  "name": "@oalpha/oa-inject",
   "version": "1.0.0",
   "description": "",
   "main": "inject.js",
