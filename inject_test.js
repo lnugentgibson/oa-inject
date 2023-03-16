@@ -4,6 +4,11 @@ const {
 const sinon = require('sinon');
 
 const oaInject = require('./inject.js');
+const base = oaInject.getModule('base');
+
+const {
+  Poset
+} = require('./graph.js');
 
 describe('oaInject', function() {
   describe('Register', function() {
@@ -253,5 +258,71 @@ describe('oaInject', function() {
     module.with(fn, ['withDepMod:dep1', 'dep2', 'dep3']);
     expect(fn.calledOnce).to.be.true;
     expect(fn.firstCall.args).to.deep.equal([1,2,3]);
+  });
+});
+
+describe('base', function() {
+  describe('poset', function() {
+    it('works', function() {
+      expect(base.get('poset')).to.equal(Poset);
+    });
+  });
+
+  describe('Math', function() {
+    let {
+      E,
+      LN2,
+      LN10,
+      LOG2E,
+      LOG10E,
+      PI,
+      SQRT1_2,
+      SQRT2,
+      abs,
+      random
+    } = Math;
+    it('E', function() {
+      expect(abs(base.get('Math.E') - E) < .000001).to.be.true;
+    });
+    it('LN2', function() {
+      expect(abs(base.get('Math.LN2') - LN2) < .000001).to.be.true;
+    });
+    it('LN10', function() {
+      expect(abs(base.get('Math.LN10') - LN10) < .000001).to.be.true;
+    });
+    it('LOG2E', function() {
+      expect(abs(base.get('Math.LOG2E') - LOG2E) < .000001).to.be.true;
+    });
+    it('LOG10E', function() {
+      expect(abs(base.get('Math.LOG10E') - LOG10E) < .000001).to.be.true;
+    });
+    it('PI', function() {
+      expect(abs(base.get('Math.PI') - PI) < .000001).to.be.true;
+    });
+    it('SQRT1_2', function() {
+      expect(abs(base.get('Math.SQRT1_2') - SQRT1_2) < .000001).to.be.true;
+    });
+    it('SQRT2', function() {
+      expect(abs(base.get('Math.SQRT2') - SQRT2) < .000001).to.be.true;
+    });
+    it('abs', function() {
+      for(var i = 0; i < 20; i++) {
+        var x = random() * 1000 - 500;
+        var e = abs(x);
+        var a = base.call('abs', x);
+        expect(abs(a - e) < .000001, `abs failed for ${x}. Expected ${e} to equal ${a}`).to.be.true;
+      }
+    });
+  });
+  
+  describe('Promise', function() {
+    it('constructor', function() {
+      let p = base.instantiate('Promise', (resolve, reject) => resolve);
+      expect(p instanceof Promise).to.be.true;
+    });
+    it('resolve', function() {
+      let p = base.call('resolve', 5);
+      expect(p instanceof Promise).to.be.true;
+    });
   });
 });
