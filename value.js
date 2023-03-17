@@ -1,78 +1,68 @@
 /* web-start */
 
-function DIValue(module, name, generator, dependencies) {
-  if(name.includes(':')) throw new Error("name cannot contain ':'");
-  
-  var value;
-  var generated = false;
-
-  function generate(deps) {
+class DIValue {
+  #module;
+  #name;
+  #generator;
+  #dependencies;
+  #value;
+  #generated = false;
+  constructor(module, name, generator, dependencies) {
+    if(name.includes(':')) throw new Error("name cannot contain ':'");
+    this.#module = module;
+    this.#name = name;
+    this.#generator = generator;
+    this.#dependencies = dependencies || [];
+  }
+  get name() { return this.#name; }
+  get dependencies() { return this.#dependencies.map(n => n); }
+  get value() { return this.#value; }
+  get generated() { return this.#generated; }
+  generate(deps) {
     //console.log(`DIValue['${name}'].generate()`);
     //console.log(`DIValue['${name}'].generator`);
     //console.log(generator);
     let val;
     try {
-    if (dependencies)
-      val = generator.apply(null, dependencies.map((dep,i) => {
+    if (this.#dependencies)
+      val = this.#generator.apply(null, this.#dependencies.map((dep,i) => {
         //console.log(`${name} requires ${dep}`);
-        return (deps && i < deps.length) ? deps[i] : module.get(dep);
+        return (deps && i < deps.length) ? deps[i] : this.#module.get(dep);
       }));
     else
-      val = generator.call(null);
+      val = this.#generator.call(null);
     }
     catch(err) {
-      console.error(`module = ${module.name}`);
-      console.error(`value name = ${name}`);
-      console.error(`value dependencies = ${dependencies.join()}`);
+      console.error(`module = ${this.#module.name}`);
+      console.error(`value name = ${this.#name}`);
+      console.error(`value dependencies = ${this.#dependencies.join()}`);
       throw err;
     }
     //console.log(`DIValue['${name}'].value`);
-    generated = true;
+    this.#generated = true;
     //console.log(value);
     return val;
   }
-
-  Object.defineProperties(this, {
-    name: {
-      get: () => name
-    },
-    dependencies: {
-      get: () => dependencies ? dependencies.map(n => n) : []
-    },
-    generated: {
-      get: () => generated
-    },
-    generate: {
-      get: () => generate
-    },
-    get: {
-      get: () => {
-        return (deps) => {
-          //console.log(`DIValue['${name}'].get()`);
-          if (!generated) value = generate(deps);
-          return value;
-        };
-      }
-    },
-    reload: {
-      get: () => ((deps) => {
-        value = generate(deps);
-        return value;
-      })
-    },
-    value: {
-      get: () => value
-    }
-  });
+  get(deps) {
+    //console.log(`DIValue['${name}'].get()`);
+    if (!this.#generated) this.#value = this.generate(deps);
+    return this.#value;
+  }
+  reload(deps) {
+    this.#value = this.generate(deps);
+    return this.#value;
+  }
 }
 
-function DIField(module, name, parent, bind = false) {
-  DIValue.call(this, module, `${parent}.${name}`, p => {
-    if(bind)
-      return p[name].bind(p);
-    else
-      return p[name];
-  }, [parent]);
+class DIField extends DIValue {
+  constructor(module, name, parent, bind = false) {
+    super(module, `${parent}.${name}`, p => {
+      if(bind)
+        return p[name].bind(p);
+      else
+        return p[name];
+    }, [parent]);
+  }
 }
 
 /* web-end */
