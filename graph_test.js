@@ -8,7 +8,7 @@ const {
 } = require('./graph.js');
 
 describe('Poset', function() {
-  var poset;
+  let poset;
   beforeEach(function() {
     poset = new Poset();
     poset.addRelation('a', 'b');
@@ -63,19 +63,33 @@ describe('Poset', function() {
     expect(poset.related('a', 'f', false)).to.be.false;
   });
   it('direct descendants', function () {
-    expect(poset.decendants('a', true)).to.deep.equal(['b', 'd']);
-    expect(poset.decendants('b', true)).to.deep.equal(['d', 'g']);
-    expect(poset.decendants('c', true)).to.deep.equal(['e', 'g', 'h']);
-    expect(poset.decendants('d', true)).to.deep.equal(['g']);
-    expect(poset.decendants('e', true)).to.deep.equal(['g', 'h']);
-    expect(poset.decendants('f', true)).to.deep.equal([]);
-    expect(poset.decendants('g', true)).to.deep.equal([]);
-    expect(poset.decendants('h', true)).to.deep.equal([]);
+    expect(poset.descendants('a', true)).to.deep.equal(['b', 'd']);
+    expect(poset.descendants('b', true)).to.deep.equal(['d', 'g']);
+    expect(poset.descendants('c', true)).to.deep.equal(['e', 'g', 'h']);
+    expect(poset.descendants('d', true)).to.deep.equal(['g']);
+    expect(poset.descendants('e', true)).to.deep.equal(['g', 'h']);
+    expect(poset.descendants('f', true)).to.deep.equal([]);
+    expect(poset.descendants('g', true)).to.deep.equal([]);
+    expect(poset.descendants('h', true)).to.deep.equal([]);
   });
   it('indirect descendants', function () {
-    var ds = poset.decendants('a');
+    let ds = poset.descendants('a');
     ds.sort();
     expect(ds).to.deep.equal(['b','d','g']);
+  });
+  it('array single descendants', function () {
+    let ds = poset.descendants(['a']);
+    ds.sort();
+    expect(ds).to.deep.equal(['b','d','g']);
+  });
+  it('array descendants', function () {
+    let ds = poset.descendants(['b', 'd']);
+    ds.sort();
+    expect(ds).to.deep.equal(['g']);
+    
+    ds = poset.descendants(['c', 'e']);
+    ds.sort();
+    expect(ds).to.deep.equal(['g', 'h']);
   });
   it('direct ancestors', function () {
     expect(poset.ancestors('a', true)).to.deep.equal([]);
@@ -88,9 +102,48 @@ describe('Poset', function() {
     expect(poset.ancestors('h', true)).to.deep.equal(['c', 'e']);
   });
   it('indirect ancestors', function () {
-    var ds = poset.ancestors('g');
+    let ds = poset.ancestors('g');
     ds.sort();
     expect(ds).to.deep.equal(['a','b','c','d','e']);
+  });
+  it('array single ancestors', function () {
+    let ds = poset.ancestors(['g']);
+    ds.sort();
+    expect(ds).to.deep.equal(['a','b','c','d','e']);
+  });
+  it('array ancestors', function () {
+    let ds = poset.ancestors(['b', 'd']);
+    ds.sort();
+    expect(ds).to.deep.equal(['a']);
+    
+    ds = poset.ancestors(['g', 'd']);
+    ds.sort();
+    expect(ds).to.deep.equal(['a', 'b', 'c', 'e']);
+  });
+  it('roots', function() {
+    expect(poset.roots()).to.deep.equal(['a', 'c']);
+  });
+  it('leaves', function() {
+    expect(poset.leaves()).to.deep.equal(['g', 'h']);
+  });
+  it('interior', function() {
+    expect(poset.interior('a', 'g')).to.deep.equal(['a', 'b', 'd', 'g']);
+  });
+  it('exterior', function() {
+    expect(poset.exterior(['a', 'g'])).to.deep.equal(['h']);
+    expect(poset.exterior(['a'])).to.deep.equal(['c', 'e', 'h']);
+    expect(poset.exterior(['e', 'g'])).to.deep.equal([]);
+  });
+  it('xdescendants', function() {
+    expect(poset.xdescendants(['a', 'b'])).to.deep.equal(['d']);
+    expect(poset.xdescendants(['c'])).to.deep.equal(['e', 'h']);
+    expect(poset.xdescendants(['b', 'd'])).to.deep.equal([]);
+  });
+  it('xancestors', function() {
+    expect(poset.xancestors(['g', 'd'])).to.deep.equal(['a', 'b']);
+    expect(poset.xancestors(['g'])).to.deep.equal(['a', 'b', 'd']);
+    expect(poset.xancestors(['b', 'd'])).to.deep.equal(['a']);
+    expect(poset.xancestors(['e'])).to.deep.equal([]);
   });
   //it('nodes', function () {
   //  //expect(poset.nodes).to.deep.equal({});
