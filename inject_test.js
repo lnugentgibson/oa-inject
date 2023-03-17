@@ -101,6 +101,9 @@ describe('oaInject', function() {
       var val = {};
       var generator = sinon.fake.returns(val);
       module.Register('val', generator, ['dep1', 'dep2', 'dep3']);
+      expect(module.get('dep1')).to.equal(1);
+      expect(module.get('dep2')).to.equal(2);
+      expect(module.get('dep3')).to.equal(3);
       expect(module.get('val')).to.equal(val);
       expect(generator.calledOnce).to.be.true;
       expect(generator.firstCall.args).to.deep.equal([1,2,3]);

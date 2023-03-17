@@ -18,158 +18,148 @@ const {
 
 var modules = {};
 
-function DIModule(name, deps) {
-  var This = this;
-  modules[name] = This;
-
-  var graph = new Poset();
-  var providers = {};
-  var functions = {};
-  var types = {};
-  var depTable = {};
-  if(deps)
-    deps.forEach(d => {
-      if(!(d instanceof DIModule)) throw new Error('dependencies must be modules');
-      depTable[d.name] = d;
-    });
-  else
-    deps = [];
-  deps.splice(0, 0, modules['base']);
-
-  function RegisterProvider(name, dependencies, provider) {
-    /*
-    if (dependencies)
-      dependencies.forEach(dep => {
-        graph.addRelation(name, dep);
+class DIModule {
+  #name;
+  #graph = new Poset();
+  #providers = {};
+  #functions = {};
+  #types = {};
+  #dependencies;
+  #depTable = {};
+  constructor(name, deps) {
+    this.#name = name;
+    modules[name] = this;
+  
+    if(deps)
+      deps.forEach(d => {
+        if(!(d instanceof DIModule)) throw new Error('dependencies must be modules');
+        this.#depTable[d.name] = d;
       });
-    //*/
-    var o = providers[name];
-    providers[name] = provider;
+    else {
+      deps = [];
+    }
+    if(name != 'base') {
+      deps.splice(0, 0, modules['base']);
+      this.#depTable['base'] = deps[0];
+    }
+    this.#dependencies = deps;
+  }
+  get name() { return this.#name; }
+  #RegisterProvider(name, dependencies, provider) {
+    // get previous provider
+    var o = this.#providers[name];
+    this.#providers[name] = provider;
+    // if previous provider exists any generated descendants need to reload
+    // with new provider
     if (o) {
-      graph.ancestors(name).forEach(n => {
-        var provider = providers[n];
+      this.#graph.decendants(name).forEach(n => {
+        var provider = this.#providers[n];
         if (provider.generated) provider.reload();
       });
     }
   }
-
-  function RegisterValue(name, generator, dependencies) {
+  Register(name, generator, dependencies) {
     if(name.includes('.')) throw new Error("name cannot contain '.'");
-    RegisterProvider(name, dependencies, new DIValue(This, name, generator, dependencies));
-    return This;
+    this.#RegisterProvider(name, dependencies, new DIValue(this, name, generator, dependencies));
+    return this;
   }
-
-  function RegisterField(name, parent, bind) {
-    RegisterProvider(`${parent}.${name}`, [parent], new DIField(This, name, parent, bind));
-    return This;
+  RegisterField(name, parent, bind) {
+    this.#RegisterProvider(`${parent}.${name}`, [parent], new DIField(this, name, parent, bind));
+    return this;
   }
-
-  function RegisterFunction(name, src, parameters) {
-    if(!providers[src]) throw new Error('no such provider');
-    functions[name] = new DIFunction(This, name, src, parameters);
-    return This;
+  RegisterFunction(name, src, parameters, bind) {
+    if(!this.#providers[src]) throw new Error('no such provider');
+    this.#functions[name] = new DIFunction(this, name, src, parameters, bind);
+    return this;
   }
-
-  function RegisterType(name, src, parameters) {
-    if(!providers[src]) throw new Error('no such provider');
-    types[name] = new DIType(This, name, src, parameters);
-    return This;
+  RegisterType(name, src, parameters) {
+    if(!this.#providers[src]) throw new Error('no such provider');
+    this.#types[name] = new DIType(this, name, src, parameters);
+    return this;
   }
-  
-  function RegisterObjectFields(name, description) {
+  #RegisterObjectFields(name, description) {
     description.forEach(descriptor => {
       if(typeof descriptor === 'string' || descriptor instanceof String) {
         var field = descriptor;
-        RegisterField(field, name);
+        this.RegisterField(field, name);
       }
       else {
         let {name: field, function: func, functions, type, types, children, bind} = descriptor;
-        RegisterField(field, name, bind);
+        this.RegisterField(field, name, bind);
         if(func) {
-          RegisterFunction(field, `${name}.${field}`, func);
+          this.RegisterFunction(field, `${name}.${field}`, func);
         }
         else if(functions)
           for(const fn in functions) {
-            RegisterFunction(fn, `${name}.${field}`, functions[fn]);
+            this.RegisterFunction(fn, `${name}.${field}`, functions[fn]);
           }
         if(type) {
-          RegisterType(field, `${name}.${field}`, type);
+          this.RegisterType(field, `${name}.${field}`, type);
         }
         else if(types)
           for(const tn in types) {
-            RegisterType(tn, `${name}.${field}`, types[tn]);
+            this.RegisterType(tn, `${name}.${field}`, types[tn]);
           }
         if(children)
-          RegisterObjectFields(`${name}.${field}`, children);
+          this.#RegisterObjectFields(`${name}.${field}`, children);
       }
     });
   }
-  
-  function RegisterObject(name, generator, dependencies, description) {
-    RegisterValue(name, generator, dependencies);
-    RegisterObjectFields(name, description);
-    return This;
+  RegisterObject(name, generator, dependencies, description) {
+    this.Register(name, generator, dependencies);
+    this.#RegisterObjectFields(name, description);
+    return this;
   }
-  
-  function applyFunction(name, args) {
-    var provider = functions[name];
+  apply(name, args) {
+    var provider = this.#functions[name];
     if(provider == undefined) throw new Error('provider returns undefined');
     return provider.apply(null, args);
   }
-
-  function ApplyFunction(name, ctx, args) {
-    var provider = functions[name];
+  Apply(name, ctx, args) {
+    var provider = this.#functions[name];
     if(provider == undefined) throw new Error('provider returns undefined');
     return provider.apply(ctx, args);
   }
-  
-  function applySelfFunction(name, args) {
-    var provider = functions[name];
+  applySelf(name, args) {
+    var provider = this.#functions[name];
     if(provider == undefined) throw new Error('provider returns undefined');
     return provider.applySelf(args);
   }
-
-  function callFunction(name, ...args) {
-    var provider = functions[name];
+  call(name, ...args) {
+    var provider = this.#functions[name];
     if(provider == undefined) throw new Error('provider returns undefined');
     return provider.call(null, ...args);
   }
-  
-  function CallFunction(name, ctx, ...args) {
-    var provider = functions[name];
+  Call(name, ctx, ...args) {
+    var provider = this.#functions[name];
     if(provider == undefined) throw new Error('provider returns undefined');
     return provider.call(ctx, ...args);
   }
-
-  function callSelfFunction(name, ...args) {
-    var provider = functions[name];
+  callSelf(name, ...args) {
+    var provider = this.#functions[name];
     if(provider == undefined) throw new Error('provider returns undefined');
     return provider.callSelf(...args);
   }
-  
-  function instantiateType(name, ...args) {
-    var provider = types[name];
+  instantiate(name, ...args) {
+    var provider = this.#types[name];
     if(provider == undefined) throw new Error('provider returns undefined');
     return provider.instantiate(...args);
   }
-  
-  function Alias(name, alias) {
-    var provider = providers[name];
-    RegisterProvider(alias, provider.dependencies, provider);
+  Alias(name, alias) {
+    var provider = this.#providers[name];
+    this.#RegisterProvider(alias, provider.dependencies, provider);
   }
-
-  function getProviders() {
-    var out = Object.keys(providers);
-    for(const fn in functions) {
+  getProviders() {
+    var out = Object.keys(this.#providers);
+    for(const fn in this.#functions) {
       out.push(fn + '()');
     }
-    for(const tn in types) {
+    for(const tn in this.#types) {
       out.push(tn + '{}');
     }
     return out;
   }
-  
-  function generateDependencies(provider, overrides, values) {
+  #generateDependencies(provider, overrides, values) {
     let {dependencies} = provider;
     let ds;
     if (dependencies)
@@ -182,44 +172,42 @@ function DIModule(name, deps) {
           var odep = overrides[dep];
           if(odep) dep = odep;
         }
-        graph.addRelation(provider.name, dep);
-        return getValue(dep);
+        this.#graph.addRelation(provider.name, dep);
+        return this.get(dep);
       });
     //*/
     return ds;
   }
-  
-  function generate(provider, overrides, values) {
-    let ds = generateDependencies(provider, overrides, values);
+  #generate(provider, overrides, values) {
+    let ds = this.#generateDependencies(provider, overrides, values);
     return provider.generate(ds);
   }
-
-  function genValue(providerName, overrides, values) {
+  gen(providerName, overrides, values) {
     try {
       var match = providerName.match(/([^:]+):(.+)/);
       if(match) {
         var dmod = match[1];
-        if(!depTable[dmod]) throw new Error(`module ${name} does not depend on module ${dmod}`);
+        if(!this.#depTable[dmod]) throw new Error(`module ${this.#name} does not depend on module ${dmod}`);
         var dep = modules[dmod];
         return dep.gen(match[2]);
       }
-      var provider = providers[providerName];
+      var provider = this.#providers[providerName];
       if (provider) {
-        return generate(provider, overrides, values);
+        return this.#generate(provider, overrides, values);
       }
-      if (deps)
-        for (var i = 0; i < deps.length && provider == undefined; i++) {
-          if (!modules[deps[i]]) {
-            throw `module ${name} depends on missing module ${deps[i]}`;
+      if (this.#dependencies.length)
+        for (var i = 0; i < this.#dependencies.length && provider == undefined; i++) {
+          if (!modules[this.#dependencies[i]]) {
+            throw `module ${this.#name} depends on missing module ${this.#dependencies[i]}`;
           }
           try {
-            return modules[deps[i]].gen(providerName);
+            return modules[this.#dependencies[i]].gen(providerName);
           }
           catch (err) {}
         }
-      var names = getProviders();
-      if (deps)
-        deps.forEach(dep => {
+      var names = this.getProviders();
+      if (this.#dependencies.length)
+        this.#dependencies.forEach(dep => {
           var Dep = modules[dep];
           names = names.concat(Dep.getProviders().map(n => dep + ':' + n));
         });
@@ -229,39 +217,41 @@ function DIModule(name, deps) {
       throw err;
     }
   }
-  
-  function provide(provider, overrides, values) {
-    let ds = generateDependencies(provider, overrides, values);
+  #provide(provider, overrides, values) {
+    let ds = this.#generateDependencies(provider, overrides, values);
     return provider.get(ds);
   }
-
-  function getValue(providerName, overrides, values) {
+  get(providerName, overrides, values) {
     try {
       var match = providerName.match(/([^:]+):(.+)/);
       if(match) {
         var dmod = match[1];
-        if(!depTable[dmod]) throw new Error(`module ${name} does not depend on module ${dmod}`);
-        var dep = depTable[dmod];
-        return dep.get(match[2]);
+        if(!this.#depTable[dmod]) throw new Error(`module ${this.#name} does not depend on module ${dmod}`);
+        var dep = this.#depTable[dmod];
+        return dep.get(match[2], overrides, values);
       }
-      var provider = providers[providerName];
+      var provider = this.#providers[providerName];
       if (provider) {
-        return provide(provider, overrides, values);
+        return this.#provide(provider, overrides, values);
       }
-      if (deps)
-        for (var i = 0; i < deps.length && provider == undefined; i++) {
-          if (!deps[i]) {
-            throw `module ${name} depends on missing module ${deps[i]}`;
+      if (this.#dependencies.length) {
+        let o;
+        if(this.#dependencies.some(D => {
+          if (!D) {
+            throw `module ${this.#name} depends on missing module`;
           }
           try {
-            return deps[i].get(providerName);
+            o = D.get(providerName, overrides, values);
+            return true;
           }
           catch (err) {}
-        }
-      var names = getProviders();
-      if (deps)
-        deps.forEach(dep => {
-          names = names.concat(dep.getProviders().map(n => dep + ':' + n));
+          return false;
+        })) return o;
+      }
+      var names = this.getProviders();
+      if (this.#dependencies.length)
+        this.#dependencies.forEach(dep => {
+          names = names.concat(dep.getProviders().map(n => dep.name + ':' + n));
         });
       throw new Error(`Provider with name ${providerName} does not exist.\nAvailable providers: ${names.join(', ')}`);
     }
@@ -269,42 +259,18 @@ function DIModule(name, deps) {
       throw err;
     }
   }
-
-  function reloadProvider(providerName, overrides, values) {
-    var provider = providers[providerName];
-    if (provider == undefined && deps)
-      for (var i = 0; i < deps.length && provider == undefined; i++)
-        provider = deps[i].get(providerName);
+  reload(providerName, overrides, values) {
+    var provider = this.#providers[providerName];
+    if (provider == undefined && this.#dependencies.length)
+      for (var i = 0; i < this.#dependencies.length && provider == undefined; i++)
+        provider = this.#dependencies[i].get(providerName);
     if (provider == undefined)
       throw new Error(`Provider with name ${providerName} does not exist`);
-    return provide(provider, overrides, values);
+    return this.#provide(provider, overrides, values);
   }
-  
-  function With(fn, dependencies) {
-    fn.apply(null, dependencies.map(d => getValue(d)));
+  with(fn, dependencies) {
+    fn.apply(null, dependencies.map(d => this.get(d)));
   }
-
-  Object.defineProperties(This, {
-    name: { get: () => name },
-    Register: { get: () => RegisterValue },
-    RegisterField: { get: () => RegisterField },
-    RegisterFunction: { get: () => RegisterFunction },
-    RegisterType: { get: () => RegisterType },
-    RegisterObject: { get: () => RegisterObject },
-    Alias: { get: () => Alias },
-    get: { get: () => getValue },
-    gen: { get: () => genValue },
-    apply: { get: () => applyFunction },
-    applySelf: { get: () => applySelfFunction },
-    Apply: { get: () => ApplyFunction },
-    call: { get: () => callFunction },
-    callSelf: { get: () => callSelfFunction },
-    Call: { get: () => CallFunction },
-    instantiate: { get: () => instantiateType },
-    getProviders: { get: () => getProviders },
-    reload: { get: () => reloadProvider },
-    with: {get: () => With}
-  });
 }
 
 const oaInject = {

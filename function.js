@@ -8,17 +8,27 @@ const {
 
 /* web-start */
 
-function DIFunction(module, name, src, parameters) {
-  function generate(func) {
+function DIFunction(module, name, src, parameters, bind) {
+  let bindVal;
+  function generate(func, bind) {
     //console.log(`DIFunction['${name}'].generate()`);
-    return shuffle(module, func, parameters.filter(p => !p.useargs));
+    let F = shuffle(module, func, parameters.filter(p => !p.useargs));
+    if(bind) {
+      bindVal = bind;
+      F = F.bind(bind);
+    }
+    return F;
   }
   if (!parameters) parameters = [];
-  DIValue.call(this, module, name, generate, [src]);
+  let deps = [src];
+  if(bind) {
+    if(bind.provider) deps.push(bind.provider);
+  }
+  DIValue.call(this, module, name, generate, deps);
   
   function call(ctx, ...args) {
     var func = this.get();
-    return func.apply(ctx, args);
+    return func.apply(ctx || bindVal, args);
   }
   function callSelf(...args) {
     var func = this.get();
@@ -26,7 +36,7 @@ function DIFunction(module, name, src, parameters) {
   }
   function apply(ctx, args) {
     var func = this.get();
-    return func.apply(ctx, args);
+    return func.apply(ctx || bindVal, args);
   }
   function applySelf(args) {
     var func = this.get();
