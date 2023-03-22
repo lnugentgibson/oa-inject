@@ -1,4 +1,5 @@
 const {
+  Comparator,
   ArrayLib
 } = require('./array.js');
 
@@ -29,7 +30,7 @@ class Poset {
   }
   descendants(name, direct = false) {
     if(name instanceof Array) {
-      let sort = ArrayLib.operatorSort;
+      let sort = Comparator.Operator;
       let names = ArrayLib.dedupe(name, sort);
       let ancestors = names.reduce((a,c) => {
         return ArrayLib.union(a, this.ancestors(c, false), sort);
@@ -65,7 +66,7 @@ class Poset {
     return arr;
   }
   xdescendants(names) {
-    let sort = ArrayLib.operatorSort;
+    let sort = Comparator.Operator;
     let as = this.ancestors(names);
     let ds = this.descendants(names);
     return ds.filter(c => {
@@ -78,7 +79,7 @@ class Poset {
   }
   ancestors(name, direct = false) {
     if(name instanceof Array) {
-      let sort = ArrayLib.operatorSort;
+      let sort = Comparator.Operator;
       let names = ArrayLib.dedupe(name, sort);
       let descendants = names.reduce((a,c) => {
         return ArrayLib.union(a, this.descendants(c, false), sort);
@@ -114,7 +115,7 @@ class Poset {
     return arr;
   }
   xancestors(names) {
-    let sort = ArrayLib.operatorSort;
+    let sort = Comparator.Operator;
     let as = this.ancestors(names);
     let ds = this.descendants(names);
     return as.filter(c => {
@@ -167,10 +168,10 @@ class Poset {
     if(!this.related(src, dst)) return [];
     let as = this.ancestors(dst);
     let ds = this.descendants(src);
-    return ArrayLib.intersection([src].concat(ds), [dst].concat(as), ArrayLib.operatorSort);
+    return ArrayLib.intersection([src].concat(ds), [dst].concat(as), Comparator.Operator);
   }
   exterior(names) {
-    let sort = ArrayLib.operatorSort;
+    let sort = Comparator.Operator;
     let ancestors = names.reduce((a,c) => {
       return ArrayLib.union(a, this.ancestors(c, false), sort);
     }, names);
