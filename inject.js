@@ -1,4 +1,10 @@
-//const _ = require("lodash");
+const _ = require("lodash");
+
+const {
+  Comparator,
+  ArrayLib,
+  SortedArray
+} = require('./array.js');
 
 const {
   Poset
@@ -79,7 +85,7 @@ class DIModule {
   }
   #RegisterObjectFields(name, description) {
     description.forEach(descriptor => {
-      if(typeof descriptor === 'string' || descriptor instanceof String) {
+      if(_.isString(descriptor)) {
         var field = descriptor;
         this.RegisterField(field, name);
       }
@@ -285,6 +291,8 @@ const oaInject = {
 
 const base = oaInject.module('base', []);
 
+base.Register('_', () => _, []);
+
 base.Register('Array', () => Array, []);
 base.Register('Map', () => Map, []);
 base.RegisterObject('Math', () => Math, [], [
@@ -343,6 +351,9 @@ base.RegisterObject('Promise', () => Promise, [], [
 ]);
 base.RegisterType('Promise', 'Promise');
 
+base.Register('comparator', () => Comparator, []);
+base.Register('arrayLib', () => ArrayLib, []);
+base.Register('sortedArray', () => SortedArray, []);
 base.Register('poset', () => Poset, []);
 
 /* web-end */
