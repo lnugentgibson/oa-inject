@@ -86,7 +86,7 @@ class DIModule {
   #RegisterObjectFields(name, description) {
     description.forEach(descriptor => {
       if(_.isString(descriptor)) {
-        var field = descriptor;
+        let field = descriptor;
         this.RegisterField(field, name);
       }
       else {
@@ -156,7 +156,7 @@ class DIModule {
     this.#RegisterProvider(alias, provider.dependencies, provider);
   }
   getProviders() {
-    var out = Object.keys(this.#providers);
+    let out = Object.keys(this.#providers);
     for(const fn in this.#functions) {
       out.push(fn + '()');
     }
@@ -276,6 +276,17 @@ class DIModule {
   }
   with(fn, dependencies) {
     fn.apply(null, dependencies.map(d => this.get(d)));
+  }
+  dot(opt) {
+    let graph = new Poset();
+    for(const [name, provider] of Object.entries(this.#providers)) {
+      graph.add(name);
+      if(provider.dependencies)
+        provider.dependencies.forEach(dep => {
+          graph.addRelation(name, dep);
+        });
+    }
+    return graph.dot(opt);
   }
 }
 

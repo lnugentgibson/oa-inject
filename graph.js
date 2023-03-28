@@ -7,6 +7,13 @@ const {
 
 class Poset {
   #nodes = {};
+  add(name) {
+    let node = this.#nodes[name];
+    if (!node) this.#nodes[name] = {
+      out: {},
+      in: {}
+    };
+  }
   related(src, dst, direct = false) {
     let node = this.#nodes[src];
     if (!node) return false;
@@ -180,6 +187,31 @@ class Poset {
     }, names);
     let sub = ArrayLib.union(ancestors, descendants, sort);
     return ArrayLib.subtract(Object.keys(this.#nodes), sub, sort);
+  }
+  dot(options) {
+    let {node_prefix, cluster, name_func} = options || {};
+    if(node_prefix) node_prefix += '_';
+    else node_prefix = '';
+    let tab1 = '', tab2 = '  ';
+    if(cluster) {
+      tab1 += '  ';
+      tab2 += '  ';
+    }
+    let nodes_string = Object.keys(this.#nodes).map(name => {
+      if(name_func) name = name_func(name);
+      return `${node_prefix}${name}[label="${name}"]`;
+    }).join('\n' + tab2);
+    let edges_string = Object.keys(this.#nodes).map(name1 => {
+      let node = this.#nodes[name1];
+      if(name_func) name1 = name_func(name1);
+      return Object.keys(node.out).map(name2 => {
+        if(name_func) name2 = name_func(name2);
+        return `${node_prefix}${name1} -> ${node_prefix}${name2}`;
+      });
+    }).flat().join('\n' + tab2);
+    let prefix = cluster == undefined ? 'digraph G {' : tab1 + `subgraph cluster_${cluster.index} {\n${tab2}label = "${cluster.name}";`;
+    let suffix = (cluster == undefined ? '' : tab1) + '}';
+    return `${prefix}\n${tab2}${nodes_string}\n${tab2}${edges_string}\n${suffix}`;
   }
 }
 
