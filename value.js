@@ -5,17 +5,20 @@ class DIValue {
   #name;
   #generator;
   #dependencies;
+  #odependencies;
   #value;
   #generated = false;
-  constructor(module, name, generator, dependencies) {
+  constructor(module, name, generator, dependencies, odependencies) {
     if(name.includes(':')) throw new Error("name cannot contain ':'");
     this.#module = module;
     this.#name = name;
     this.#generator = generator;
     this.#dependencies = dependencies || [];
+    this.#odependencies = odependencies || [];
   }
   get name() { return this.#name; }
   get dependencies() { return this.#dependencies.map(n => n); }
+  get odependencies() { return this.#odependencies.map(n => n); }
   get value() { return this.#value; }
   get generated() { return this.#generated; }
   generate(deps) {
@@ -24,13 +27,15 @@ class DIValue {
     //console.log(generator);
     let val;
     try {
-    if (this.#dependencies)
-      val = this.#generator.apply(null, this.#dependencies.map((dep,i) => {
+      let ds = this.#dependencies.map((dep,i) => {
         //console.log(`${name} requires ${dep}`);
         return (deps && i < deps.length) ? deps[i] : this.#module.get(dep);
+      });
+      ds = ds.concat(this.#odependencies.map((dep,i) => {
+        //console.log(`${name} requires ${dep}`);
+        return (deps && this.#dependencies.length + i < deps.length) ? deps[this.#dependencies.length + i] : this.#module.get(dep);
       }));
-    else
-      val = this.#generator.call(null);
+      val = this.#generator.apply(null, ds);
     }
     catch(err) {
       console.error(`module = ${this.#module.name}`);

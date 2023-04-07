@@ -131,6 +131,40 @@ describe('oaInject', function() {
       var badFn = function() { module.get('val'); };
       expect(badFn).to.throw('does not depend');
     });
+    it('generate works with optional dependencies', function() {
+      var module = oaInject.module('mod3d');
+      module.Register('dep1', () => 1);
+      module.Register('dep2', () => 2);
+      module.Register('dep2b', () => -2);
+      module.Register('dep3', () => 3);
+      module.Register('dep5', () => 5);
+      var generator = sinon.stub().callsFake((a,b,c) => ({v:a+b+c}));
+      module.Register('val', generator, ['dep1', 'dep2', 'dep3'], ['dep4', 'dep5', 'dep6']);
+      
+      let val = module.get('val');
+      expect(val).to.deep.equal({v:6});
+      expect(generator.calledOnce).to.be.true;
+      //expect(generator.firstCall.args).to.deep.equal([1,2,3]);
+      expect(generator.calledWith(1, 2, 3, undefined, 5, undefined), generator.firstCall.args.join()).to.be.true;
+      
+      val = module.gen('val', {dep2: 'dep2b'});
+      expect(val).to.deep.equal({v:2});
+      expect(generator.callCount).to.equal(2);
+      //expect(generator.firstCall.args).to.deep.equal([1,2,3]);
+      expect(generator.calledWith(1, -2, 3, undefined, 5, undefined), generator.secondCall.args.join()).to.be.true;
+      
+      val = module.gen('val', null, {dep2: 4});
+      expect(val).to.deep.equal({v:8});
+      expect(generator.callCount).to.equal(3);
+      //expect(generator.firstCall.args).to.deep.equal([1,2,3]);
+      expect(generator.calledWith(1, 4, 3, undefined, 5, undefined), generator.thirdCall.args.join()).to.be.true;
+      
+      val = module.get('val');
+      expect(val).to.deep.equal({v:6});
+      expect(generator.callCount).to.equal(3);
+      //expect(generator.firstCall.args).to.deep.equal([1,2,3]);
+      //expect(generator.calledWith(1, 2, 3, undefined, 5, undefined), generator.firstCall.args.join()).to.be.true;
+    });
   });
   describe('RegisterField', function() {
     it('works', function() {
@@ -149,6 +183,7 @@ describe('oaInject', function() {
       var generator = () => func;
       module.Register('func', generator);
       module.RegisterFunction('func', 'func', []);
+      expect(module.get('func')).to.equal(func);
       expect(module.call('func')).to.equal(2);
     });
   });

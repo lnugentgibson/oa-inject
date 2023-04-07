@@ -64,9 +64,9 @@ class DIModule {
       });
     }
   }
-  Register(name, generator, dependencies) {
+  Register(name, generator, dependencies, odependencies) {
     if(name.includes('.')) throw new Error("name cannot contain '.'");
-    this.#RegisterProvider(name, dependencies, new DIValue(this, name, generator, dependencies));
+    this.#RegisterProvider(name, dependencies, new DIValue(this, name, generator, dependencies, odependencies));
     return this;
   }
   RegisterField(name, parent, bind) {
@@ -166,22 +166,37 @@ class DIModule {
     return out;
   }
   #generateDependencies(provider, overrides, values) {
-    let {dependencies} = provider;
+    let {dependencies, odependencies} = provider;
     let ds;
-    if (dependencies)
-      ds = dependencies.map(dep => {
-        if(values) {
-          let val = values[dep];
-          if(val != undefined) return val;
-        }
-        if(overrides) {
-          var odep = overrides[dep];
-          if(odep) dep = odep;
-        }
+    ds = dependencies.map(dep => {
+      if(values) {
+        let val = values[dep];
+        if(val != undefined) return val;
+      }
+      if(overrides) {
+        var odep = overrides[dep];
+        if(odep) dep = odep;
+      }
+      this.#graph.addRelation(provider.name, dep);
+      return this.get(dep);
+    });
+    ds = ds.concat(odependencies.map(dep => {
+      if(values) {
+        let val = values[dep];
+        if(val != undefined) return val;
+      }
+      if(overrides) {
+        var odep = overrides[dep];
+        if(odep) dep = odep;
+      }
+      let D;
+      try {
+        D = this.get(dep);
         this.#graph.addRelation(provider.name, dep);
-        return this.get(dep);
-      });
-    //*/
+      }
+      catch(err) {}
+      return D;
+    }));
     return ds;
   }
   #generate(provider, overrides, values) {
